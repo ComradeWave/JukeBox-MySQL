@@ -58,16 +58,15 @@ erDiagram
         string nome
         string cognome
         date data_nascita
-        string nazionalità
+        string nazionalita
     }
     Interpreta {
         int id_canzone FK
         int id_cantante FK
         timestamp created_at
     }
-    Canzone ||--o{ Interpreta : "interprets"
-    Cantante ||--o{ Interpreta : "interprets"
-
+    Canzone ||--o{ Interpreta : has
+    Cantante ||--o{ Interpreta : has
 ```
 
 **Changes:**
