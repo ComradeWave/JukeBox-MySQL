@@ -101,63 +101,7 @@ Avremo un cantante che interpreta una canzone, una canzone può essere interpret
 Canzone (id, titolo, durata, anno, genere, autore)
 Cantante (id, nome, cognome, data_nascita, nazionalità)
 
-### Progettazione DB
-```sql
-CREATE DATABASE JukeBox;
-USE JukeBox;
 
-CREATE TABLE Cantante (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    nome VARCHAR(255) NOT NULL,
-    cognome VARCHAR(255) NOT NULL,
-    data_nascita DATE NOT NULL,
-    nazionalità VARCHAR(255) NOT NULL
-);
-
-CREATE TABLE Canzone (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    titolo VARCHAR(255) NOT NULL,
-    durata INT NOT NULL,
-    anno YEAR NOT NULL,
-    genere VARCHAR(255) NOT NULL,
-    autore VARCHAR(255) NOT NULL
-);
-
-CREATE TABLE Interpreta (
-    id_canzone INT,
-    id_cantante INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id_canzone, id_cantante),
-    FOREIGN KEY (id_canzone) REFERENCES Canzone(id),
-    FOREIGN KEY (id_cantante) REFERENCES Cantante(id)
-);
-```
-
-### ER Model
-```mermaid
-erDiagram
-    Canzone {
-        int id PK
-        string titolo
-        int durata
-        year anno
-        string genere
-        string autore
-    }
-    Cantante {
-        int id PK
-        string nome
-        string cognome
-        date data_nascita
-        string nazionalità
-    }
-   Interpreta {
-      int id_canzone FK
-      int id_cantante FK
-      timestamp created_at
-   }
-   Canzone ||--o{ Interpreta : "interprets"
-```
 
 ### REST API Endpoints
 
