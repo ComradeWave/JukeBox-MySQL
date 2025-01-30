@@ -60,13 +60,13 @@ erDiagram
         date data_nascita
         string nazionalità
     }
-   Interpreta {
-      int id_canzone FK
-      int id_cantante FK
-      timestamp created_at
-   }
-   Canzone ||--o{ Interpreta : "interprets"
-   Cantante ||--o{ Interpreta : "performs"
+    Interpreta {
+        int id_canzone FK
+        int id_cantante FK
+        timestamp created_at
+    }
+    Canzone ||--o{ Interpreta : "interprets"
+    Cantante ||--o{ Interpreta : "interprets"
 
 ```
 
