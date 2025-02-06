@@ -141,4 +141,34 @@ Cantante (id, nome, cognome, data_nascita, nazionalità)
 - [x] API documentation with Swagger or similar.
 - [x] File structure documentation
 - [x] Analysis of the project
+
+## Interfacce e Metodi
+
+### Database Connection
+- **File:** `conn/config.php`
+- **Metodi:**
+  - `createConnection()`: Stabilisce la connessione al database
+  - `closeConnection()`: Chiude la connessione al database
+
+### Songs Controller (`SongsController.php`)
+- **Metodi:**
+  - `createSong(array $data)`: Crea una nuova canzone
+  - `getAllSongs()`: Recupera tutte le canzoni
+  - `getSongById(int $id)`: Recupera una canzone specifica
+  - `updateSong(int $id, array $data)`: Aggiorna una canzone
+  - `deleteSong(int $id)`: Elimina una canzone
+
+### Artists Controller (`ArtistsController.php`)
+- **Metodi:**
+  - `createArtist(array $data)`: Crea un nuovo artista
+  - `getAllArtists()`: Recupera tutti gli artisti
+  - `getArtistById(int $id)`: Recupera un artista specifico
+  - `updateArtist(int $id, array $data)`: Aggiorna un artista
+  - `deleteArtist(int $id)`: Elimina un artista
+
+### Interpretazioni Controller (`InterpretiController.php`)
+- **Metodi:**
+  - `addInterpretazione(int $id_canzone, int $id_cantante)`: Aggiunge un'interpretazione
+  - `getInterpretiByCanzone(int $id_canzone)`: Recupera gli artisti di una canzone
+  - `getInterpretiByArtista(int $id_artista)`: Recupera le canzoni di un artista
 ```

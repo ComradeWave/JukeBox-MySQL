@@ -1,8 +1,10 @@
 <?php
 // Configurazione e inclusione delle API
-include_once "conn/config.php";
+require_once "conn/config.php";
 include_once "conn/controllers/SongsController.php";
 include_once "conn/controllers/ArtistsController.php";
+
+$conn = createConnection();
 
 $songsController = new SongsController($conn);
 $artistsController = new ArtistsController($conn);
@@ -38,55 +40,168 @@ $artists = json_decode($artistsController->getAllArtists(), true);
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>JukeBox Management</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        .container {
-            display: flex;
-            justify-content: space-between;
-        }
-        .section {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            width: 45%;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        form input, form select {
-            width: 100%;
-            padding: 8px;
-            margin: 5px 0;
-        }
-        .message {
-            background-color: #dff0d8;
-            color: #3c763d;
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 5px;
-        }
-    </style>
-</head>
-<body>
-    <h1>JukeBox Management</h1>
+        <title>🎵 JukeBox Management</title>
+        <style>
+            /* Retro Neocities-inspired styling */
+            body {
+                background-color: #000000;
+                color: #00FF00;
+                font-family: 'Courier New', monospace;
+                line-height: 1.6;
+                margin: 0;
+                padding: 20px;
+                background-image:
+                    linear-gradient(rgba(0,255,0,0.1) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(0,255,0,0.1) 1px, transparent 1px);
+                background-size: 20px 20px;
+            }
 
-    <?php if ($message): ?>
+            .glitch {
+                position: relative;
+                text-transform: uppercase;
+                font-size: 3rem;
+                animation: glitch-skew 1s infinite linear alternate-reverse;
+            }
+
+            .glitch::before {
+                content: attr(data-text);
+                position: absolute;
+                top: 0;
+                left: -2px;
+                text-shadow: -2px 0 red;
+                clip: rect(44px, 450px, 56px, 0);
+                animation: glitch-anim 5s infinite linear alternate-reverse;
+            }
+
+            .glitch::after {
+                content: attr(data-text);
+                position: absolute;
+                top: 0;
+                left: 2px;
+                text-shadow: -2px 0 blue;
+                clip: rect(44px, 450px, 56px, 0);
+                animation: glitch-anim2 5s infinite linear alternate-reverse;
+            }
+
+            @keyframes glitch-anim {
+                0% { clip: rect(61px, 9999px, 52px, 0); }
+                5% { clip: rect(33px, 9999px, 144px, 0); }
+                10% { clip: rect(121px, 9999px, 48px, 0); }
+                15% { clip: rect(81px, 9999px, 137px, 0); }
+                20% { clip: rect(138px, 9999px, 103px, 0); }
+                25% { clip: rect(40px, 9999px, 66px, 0); }
+            }
+
+            @keyframes glitch-anim2 {
+                0% { clip: rect(29px, 9999px, 83px, 0); }
+                5% { clip: rect(138px, 9999px, 124px, 0); }
+                10% { clip: rect(44px, 9999px, 34px, 0); }
+                15% { clip: rect(104px, 9999px, 133px, 0); }
+                20% { clip: rect(57px, 9999px, 59px, 0); }
+                25% { clip: rect(79px, 9999px, 89px, 0); }
+            }
+
+            @keyframes glitch-skew {
+                0% { transform: skew(3deg); }
+                10% { transform: skew(-3deg); }
+                20% { transform: skew(1deg); }
+                30% { transform: skew(-1deg); }
+                40% { transform: skew(2deg); }
+                50% { transform: skew(-2deg); }
+                60% { transform: skew(3deg); }
+                70% { transform: skew(-3deg); }
+            }
+
+            .container {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 20px;
+            }
+
+            .section {
+                background-color: rgba(0,0,0,0.8);
+                border: 2px solid #00FF00;
+                padding: 20px;
+                width: 45%;
+                box-shadow: 0 0 10px #00FF00;
+            }
+
+            h1, h2, h3 {
+                color: #00FF00;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: separate;
+                border-spacing: 0;
+                margin-top: 20px;
+            }
+
+            th, td {
+                border: 1px solid #00FF00;
+                padding: 10px;
+                text-align: left;
+                color: #00FF00;
+            }
+
+            th {
+                background-color: rgba(0,255,0,0.2);
+            }
+
+            form {
+                display: flex;
+                flex-direction: column;
+            }
+
+            input, button {
+                background-color: black;
+                color: #00FF00;
+                border: 1px solid #00FF00;
+                padding: 10px;
+                margin: 5px 0;
+                font-family: 'Courier New', monospace;
+            }
+
+            button {
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            button:hover {
+                background-color: #00FF00;
+                color: black;
+            }
+
+            .message {
+                background-color: rgba(0,255,0,0.2);
+                color: #00FF00;
+                padding: 15px;
+                margin-bottom: 20px;
+                border: 1px solid #00FF00;
+            }
+
+            /* Scrollbar styling */
+            ::-webkit-scrollbar {
+                width: 10px;
+            }
+
+            ::-webkit-scrollbar-track {
+                background: black;
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background: #00FF00;
+            }
+        </style>
+    </head>
+    <body>
+        <h1 class="glitch" data-text="JukeBox Management">JukeBox Management</h1>
+
+        <?php if ($message): ?>
         <div class="message"><?php echo $message; ?></div>
-    <?php endif; ?>
+        <?php endif; ?>
 
     <div class="container">
         <div class="section">
