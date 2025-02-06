@@ -32,6 +32,37 @@ class Canzone
 
     public function create(): bool
     {
+        //Controllo duplicati
+        $checkQuery = "SELECT id FROM {$this->table}
+                    WHERE titolo=? AND autore=? AND anno = ?";
+        // mysqli_prepare(): Creates a prepared statement for secure database queries
+        // This method prepares an SQL statement template to prevent SQL injection
+        // It separates the SQL query structure from actual data values
+
+        // mysqli_stmt_bind_param(): Binds variables to the prepared statement
+        // The first argument is the statement, second is a type string where:
+        // 's' = string, 'i' = integer, 'd' = double, 'b' = blob
+        // Subsequent arguments are the actual values to be bound
+
+        // mysqli_stmt_execute(): Executes the prepared statement
+        // Runs the query with the bound parameters, providing security against SQL injection
+        // Returns true on success, false on failure
+        $checkStmt = mysqli_prepare($this->conn, $checkQuery);
+        mysqli_stmt_bind_param(
+            $checkStmt,
+            "ssi",
+            $this->titolo,
+            $this->autore,
+            $this->anno
+        );
+        mysqli_stmt_execute($checkStmt);
+        $checkResult = mysqli_stmt_get_result($checkStmt);
+
+        if (mysqli_num_rows($checkResult > 0)) {
+            // Canzone già presente
+            return false;
+        }
+
         $query = "INSERT INTO {$this->table}
                   (titolo, durata, anno, genere, autore)
                   VALUES (?, ?, ?, ?, ?)";

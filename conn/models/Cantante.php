@@ -80,6 +80,32 @@ class Cantante
      */
     public function create(): bool
     {
+        // Controllo duplicati
+        $checkQuery = "SELECT id FROM {$this->table}
+                      WHERE nome=? AND cognome=? AND data_nascita=?";
+
+        // mysqli_prepare(): Creates a prepared statement for secure database queries
+        // This method prepares an SQL statement template to prevent SQL injection
+        // It separates the SQL query structure from actual data values
+
+        // mysqli_stmt_bind_param(): Binds variables to the prepared statement
+        // The first argument is the statement, second is a type string where:
+        // 's' = string, 'i' = integer, 'd' = double, 'b' = blob
+        // Subsequent arguments are the actual values to be bound
+
+        // mysqli_stmt_execute(): Executes the prepared statement
+        // Runs the query with the bound parameters, providing security against SQL injection
+        // Returns true on success, false on failure
+        $checkStmt = mysqli_prepare($this->conn, $checkQuery);
+        mysqli_stmt_bind_param(
+            $checkStmt,
+            "sss",
+            $this->nome,
+            $this->cognome,
+            $this->data_nascita
+        );
+        mysqli_stmt_execute($checkStmt);
+        $checkResult = mysqli_stmt_get_result($checkStmt);
         $query = "INSERT INTO {$this->table}
                   (nome, cognome, data_nascita, nazionalità)
                   VALUES (?, ?, ?, ?)";
