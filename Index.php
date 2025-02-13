@@ -1,8 +1,11 @@
 <?php
+error_reporting(E_ALL);
+ini_set("display_errors", 1);
 // Configurazione e inclusione delle API
 require_once "conn/config.php";
-include_once "conn/controllers/SongsController.php";
-include_once "conn/controllers/ArtistsController.php";
+include_once "conn/models/SongsController.php";
+include_once "conn/models/ArtistsController.php";
+include_once "conn/models/InterpretaController.php";
 
 $conn = createConnection();
 
