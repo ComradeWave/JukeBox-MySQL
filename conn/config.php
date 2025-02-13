@@ -23,4 +23,23 @@ function closeConnection($conn)
         mysqli_close($conn);
     }
 }
+function handleDatabaseError($conn, $query = null)
+{
+    $errorMessage = mysqli_error($conn);
+    $errorCode = mysqli_errno($conn);
+
+    error_log("Database Error [Code $errorCode]: $errorMessage");
+
+    if ($query) {
+        error_log("Query that caused the error: $query");
+    }
+
+    return [
+        "success" => false,
+        "error_code" => $errorCode,
+        "error_message" => $errorMessage,
+    ];
+}
 ?>
+?>
+ ?>

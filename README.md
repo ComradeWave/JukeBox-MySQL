@@ -51,7 +51,7 @@ erDiagram
         int durata
         year anno
         string genere
-        string autore
+        string autore?
     }
     Cantante {
         int id PK
@@ -117,6 +117,11 @@ Cantante (id, nome, cognome, data_nascita, nazionalità)
     *   `POST /artists`: Create a new artist
     *   `PUT /artists/{id}`: Update an artist
     *   `DELETE /artists/{id}`: Delete an artist
+*   **Interpretazioni:**
+    *   `GET /songs/{id}/artists`: Recupera gli artisti di una specifica canzone
+    *   `GET /artists/{id}/songs`: Recupera le canzoni di uno specifico artista
+    *   `POST /interpretazioni`: Aggiungi una nuova interpretazione
+    *   `DELETE /interpretazioni`: Rimuovi un'interpretazione esistente
 
 ### Features
 - [x] Inserimenti (POST)
@@ -141,7 +146,7 @@ Cantante (id, nome, cognome, data_nascita, nazionalità)
 - [x] API documentation with Swagger or similar.
 - [x] File structure documentation
 - [x] Analysis of the project
-
+```
 ## Interfacce e Metodi
 
 ### Database Connection
@@ -171,4 +176,101 @@ Cantante (id, nome, cognome, data_nascita, nazionalità)
   - `addInterpretazione(int $id_canzone, int $id_cantante)`: Aggiunge un'interpretazione
   - `getInterpretiByCanzone(int $id_canzone)`: Recupera gli artisti di una canzone
   - `getInterpretiByArtista(int $id_artista)`: Recupera le canzoni di un artista
+
+### Modello Logico delle Interpretazioni
+
+#### Struttura della Relazione
+
 ```
+Interpreta {
+    id_canzone: INT (FK → Canzone.id)
+    id_cantante: INT (FK → Cantante.id)
+    created_at: TIMESTAMP
+    PRIMARY KEY (id_canzone, id_cantante)
+}
+```
+
+#### Vincoli e Proprietà
+
+1. **Cardinalità**
+   - Una Canzone può avere 0 o più Cantanti
+   - Un Cantante può interpretare 0 o più Canzoni
+
+2. **Integrità Referenziale**
+   - Ogni interpretazione deve riferirsi a una Canzone esistente
+   - Ogni interpretazione deve riferirsi a un Cantante esistente
+
+3. **Unicità**
+   - Non sono consentite interpretazioni duplicate
+   - Ogni coppia (canzone, cantante) è unica
+
+#### Esempio di Interpretazione
+
+```json
+{
+    "id_canzone": 1,     // ID della Canzone
+    "id_cantante": 5,    // ID del Cantante
+    "created_at": "2023-06-15 14:30:00"
+}
+```
+
+### Casi d'Uso Tipici
+
+1. **Aggiungere un'Interpretazione**
+   ```http
+   POST /interpretazioni
+   {
+       "id_canzone": 1,
+       "id_cantante": 5
+   }
+   ```
+
+2. **Recuperare Artisti di una Canzone**
+   ```http
+   GET /songs/1/artists
+   ```
+   Restituisce:
+   ```json
+   {
+       "success": true,
+       "artisti": [
+           {"id": 5, "nome": "Mario", "cognome": "Rossi"},
+           {"id": 7, "nome": "Luigi", "cognome": "Bianchi"}
+       ],
+       "count": 2
+   }
+   ```
+
+3. **Recuperare Canzoni di un Artista**
+   ```http
+   GET /artists/5/songs
+   ```
+   Restituisce:
+   ```json
+   {
+       "success": true,
+       "canzoni": [
+           {"id": 1, "titolo": "Canzone 1", "anno": 2020},
+           {"id": 3, "titolo": "Canzone 2", "anno": 2022}
+       ],
+       "count": 2
+   }
+   ```
+
+### Gestione degli Errori
+
+1. **Interpretazione Duplicata**
+   ```json
+   {
+       "success": false,
+       "message": "Interpretazione già esistente"
+   }
+   ```
+
+2. **Canzone o Artista Non Esistente**
+   ```json
+   {
+       "success": false,
+       "message": "Canzone o artista non esistono"
+   }
+   ```
