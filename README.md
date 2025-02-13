@@ -51,7 +51,7 @@ erDiagram
         int durata
         year anno
         string genere
-        string autore?
+        string autore
     }
     Cantante {
         int id PK
@@ -102,7 +102,7 @@ Canzone (id, titolo, durata, anno, genere, autore)
 Cantante (id, nome, cognome, data_nascita, nazionalità)
 
 
-
+```
 ### REST API Endpoints
 
 *   **Songs:**
@@ -146,7 +146,7 @@ Cantante (id, nome, cognome, data_nascita, nazionalità)
 - [x] API documentation with Swagger or similar.
 - [x] File structure documentation
 - [x] Analysis of the project
-```
+
 ## Interfacce e Metodi
 
 ### Database Connection
