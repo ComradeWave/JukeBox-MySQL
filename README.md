@@ -51,7 +51,7 @@ erDiagram
         int durata
         year anno
         string genere
-        string autore?
+        string autore
     }
     Cantante {
         int id PK
