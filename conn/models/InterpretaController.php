@@ -1,6 +1,5 @@
 <?php
 // JukeBox PHPMySQL/conn/models/InterpretaController.php
-require_once "config.php";
 class InterpretaController
 {
     /**

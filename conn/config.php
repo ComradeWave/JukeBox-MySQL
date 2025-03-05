@@ -5,7 +5,7 @@ function createConnection()
     $servername = "localhost"; // Aggiungi il punto e virgola mancante
     $username = "root"; // Racchiudi la stringa tra virgolette
     $password = ""; // Stringa vuota tra virgolette
-    $dbname = "jukebox"; // Racchiudi la stringa tra virgolette
+    $dbname = "JUKEBOX"; // Racchiudi la stringa tra virgolette
 
     // Create connection
     $conn = @mysqli_connect($servername, $username, $password, $dbname);
@@ -42,4 +42,5 @@ function handleDatabaseError($conn, $query = null)
 }
 ?>
 ?>
+ ?>
  ?>
