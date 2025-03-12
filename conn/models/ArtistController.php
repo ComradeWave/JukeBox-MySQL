@@ -70,7 +70,7 @@ class ArtistsController
      */
     private function getArtistSongs($id): array
     {
-        $query = "SELECT c.id, c.titolo, c.anno, c.genere, i.ruolo
+        $query = "SELECT c.id, c.titolo, c.anno, c.genere
                   FROM Canzone c
                   JOIN Interpreta i ON c.id = i.id_canzone
                   WHERE i.id_cantante = ?";
