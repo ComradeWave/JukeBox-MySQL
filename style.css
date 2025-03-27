@@ -1,143 +1,57 @@
-
-    /* Retro Neocities-inspired styling */
-body {
-    background-color: #000000;
-    color: #00FF00;
-    font-family: 'Courier New', monospace;
-    line-height: 1.6;
+/* Reset some default styles */
+body,
+html {
     margin: 0;
-    padding: 20px;
-    background-image:
-            linear-gradient(rgba(0, 255, 0, 0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 255, 0, 0.1) 1px, transparent 1px);
-    background-size: 20px 20px;
+    padding: 0;
+    height: 100%;
+    overflow: hidden; /* Prevent scrollbars for the whole page */
 }
 
-.glitch {
-    position: relative;
-    text-transform: uppercase;
-    font-size: 3rem;
-    animation: glitch-skew 1s infinite linear alternate-reverse;
+/* WebGL Container */
+#webgl-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0; /* Behind other content */
+    pointer-events: none; /* Crucial: Prevents canvas interaction */
 }
 
-.glitch::before {
-    content: attr(data-text);
+/* Shader background */
+#bg-shader {
     position: absolute;
     top: 0;
-    left: -2px;
-    text-shadow: -2px 0 red;
-    clip: rect(44px, 450px, 56px, 0);
-    animation: glitch-anim 5s infinite linear alternate-reverse;
-}
-
-.glitch::after {
-    content: attr(data-text);
-    position: absolute;
-    top: 0;
-    left: 2px;
-    text-shadow: -2px 0 blue;
-    clip: rect(44px, 450px, 56px, 0);
-    animation: glitch-anim2 5s infinite linear alternate-reverse;
-}
-
-@keyframes glitch-anim {
-    0% {
-        clip: rect(61px, 9999px, 52px, 0);
-    }
-
-    5% {
-        clip: rect(33px, 9999px, 144px, 0);
-    }
-
-    10% {
-        clip: rect(121px, 9999px, 48px, 0);
-    }
-
-    15% {
-        clip: rect(81px, 9999px, 137px, 0);
-    }
-
-    20% {
-        clip: rect(138px, 9999px, 103px, 0);
-    }
-
-    25% {
-        clip: rect(40px, 9999px, 66px, 0);
-    }
-}
-
-@keyframes glitch-anim2 {
-    0% {
-        clip: rect(29px, 9999px, 83px, 0);
-    }
-
-    5% {
-        clip: rect(138px, 9999px, 124px, 0);
-    }
-
-    10% {
-        clip: rect(44px, 9999px, 34px, 0);
-    }
-
-    15% {
-        clip: rect(104px, 9999px, 133px, 0);
-    }
-
-    20% {
-        clip: rect(57px, 9999px, 59px, 0);
-    }
-
-    25% {
-        clip: rect(79px, 9999px, 89px, 0);
-    }
-}
-
-@keyframes glitch-skew {
-    0% {
-        transform: skew(3deg);
-    }
-
-    10% {
-        transform: skew(-3deg);
-    }
-
-    20% {
-        transform: skew(1deg);
-    }
-
-    30% {
-        transform: skew(-1deg);
-    }
-
-    40% {
-        transform: skew(2deg);
-    }
-
-    50% {
-        transform: skew(-2deg);
-    }
-
-    60% {
-        transform: skew(3deg);
-    }
-
-    70% {
-        transform: skew(-3deg);
-    }
+    left: 0;
+    width: 100%;
+    height: 100%;
 }
 
 .container {
+    position: fixed; /* Fixed position */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    height: 100%; /* Cover the whole screen */
+    z-index: 1; /* Above WebGL container */
     display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
+    flex-direction: column;
+    justify-content: flex-start; /* Align content to the top */
+    align-items: center;
+    box-sizing: border-box;
+    overflow-y: auto; /* Enable vertical scrolling for the container */
 }
 
 .section {
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.5);
     border: 2px solid #00FF00;
     padding: 20px;
-    width: 45%;
+    margin-bottom: 20px;
+    width: 80%;
+    max-width: 600px;
     box-shadow: 0 0 10px #00FF00;
+    overflow-y: auto; /* Enable vertical scrolling for sections */
 }
 
 h1,
@@ -170,11 +84,14 @@ th {
 form {
     display: flex;
     flex-direction: column;
+    background-color: transparent;
+    overflow-y: auto; /* Enable vertical scrolling for forms */
 }
 
 input,
-button {
-    background-color: black;
+button,
+select {
+    background-color: rgba(0, 0, 0, 0.7);
     color: #00FF00;
     border: 1px solid #00FF00;
     padding: 10px;
@@ -211,42 +128,4 @@ button:hover {
 
 ::-webkit-scrollbar-thumb {
     background: #00FF00;
-}
-
-.section-retrieval {
-    background-color: rgba(0, 0, 0, 0.8);
-    border: 2px solid #00FF00;
-    padding: 20px;
-    margin-top: 20px;
-    width: 100%;
-    box-shadow: 0 0 10px #00FF00;
-}
-
-.search-panel {
-    margin-bottom: 20px;
-    padding: 15px;
-    border: 1px solid #00FF00;
-    border-radius: 5px;
-}
-
-.search-form {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.results-panel {
-    margin-top: 10px;
-    padding: 10px;
-    border: 1px solid #00FF00;
-    min-height: 50px;
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.result-item {
-    padding: 10px;
-    margin: 5px 0;
-    border: 1px solid #00FF00;
-    background-color: rgba(0, 255, 0, 0.1);
 }
