@@ -1,5 +1,4 @@
 <?php
-// JukeBox PHPMySQL/conn/controllers/ArtistsController.php
 class ArtistsController
 {
     /**
@@ -24,6 +23,7 @@ class ArtistsController
     public function __construct($conn)
     {
         $this->conn = $conn;
+        include_once "Cantante.php"; // Include the Cantante class definition
         $this->cantante = new Cantante($conn);
     }
 
@@ -109,9 +109,6 @@ class ArtistsController
         $this->cantante->data_nascita = $data["data_nascita"];
         $this->cantante->nazionalità = $data["nazionalità"];
 
-        // Optional fields
-        $this->cantante->genere_principale = $data["genere_principale"] ?? null;
-        $this->cantante->biografia = $data["biografia"] ?? null;
 
         return $this->cantante->create();
     }
@@ -134,18 +131,9 @@ class ArtistsController
 
         $this->cantante->id = $id;
         $this->cantante->nome = $data["nome"] ?? $existingArtist["nome"];
-        $this->cantante->cognome =
-            $data["cognome"] ?? $existingArtist["cognome"];
-        $this->cantante->data_nascita =
-            $data["data_nascita"] ?? $existingArtist["data_nascita"];
-        $this->cantante->nazionalità =
-            $data["nazionalità"] ?? $existingArtist["nazionalità"];
-
-        // Optional fields
-        $this->cantante->genere_principale =
-            $data["genere_principale"] ?? $existingArtist["genere_principale"];
-        $this->cantante->biografia =
-            $data["biografia"] ?? $existingArtist["biografia"];
+        $this->cantante->cognome = $data["cognome"] ?? $existingArtist["cognome"];
+        $this->cantante->data_nascita = $data["data_nascita"] ?? $existingArtist["data_nascita"];
+        $this->cantante->nazionalità = $data["nazionalità"] ?? $existingArtist["nazionalità"];
 
         return $this->cantante->update();
     }
@@ -166,8 +154,7 @@ class ArtistsController
         }
 
         // Optional: Check if artist has associated songs
-        $songsQuery =
-            "SELECT COUNT(*) as song_count FROM Interpreta WHERE id_cantante = ?";
+        $songsQuery = "SELECT COUNT(*) as song_count FROM Interpreta WHERE id_cantante = ?";
         $stmt = mysqli_prepare($this->conn, $songsQuery);
         mysqli_stmt_bind_param($stmt, "i", $id);
         mysqli_stmt_execute($stmt);
@@ -180,8 +167,7 @@ class ArtistsController
             // return false;
 
             // 2. Delete associated songs
-            $deleteAssociatedSongs =
-                "DELETE FROM Interpreta WHERE id_cantante = ?";
+            $deleteAssociatedSongs = "DELETE FROM Interpreta WHERE id_cantante = ?";
             $stmt = mysqli_prepare($this->conn, $deleteAssociatedSongs);
             mysqli_stmt_bind_param($stmt, "i", $id);
             mysqli_stmt_execute($stmt);

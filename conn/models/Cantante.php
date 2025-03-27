@@ -80,47 +80,51 @@ class Cantante
      */
     public function create(): bool
     {
-        // Controllo duplicati
-        $checkQuery = "SELECT id FROM {$this->table}
-                      WHERE nome=? AND cognome=? AND data_nascita=?";
+        $query = "INSERT INTO {$this->table} (nome, cognome, data_nascita, nazionalità";
 
-        // mysqli_prepare(): Creates a prepared statement for secure database queries
-        // This method prepares an SQL statement template to prevent SQL injection
-        // It separates the SQL query structure from actual data values
 
-        // mysqli_stmt_bind_param(): Binds variables to the prepared statement
-        // The first argument is the statement, second is a type string where:
-        // 's' = string, 'i' = integer, 'd' = double, 'b' = blob
-        // Subsequent arguments are the actual values to be bound
+        $query .= ") VALUES (?, ?, ?, ?";
 
-        // mysqli_stmt_execute(): Executes the prepared statement
-        // Runs the query with the bound parameters, providing security against SQL injection
-        // Returns true on success, false on failure
-        $checkStmt = mysqli_prepare($this->conn, $checkQuery);
-        mysqli_stmt_bind_param(
-            $checkStmt,
-            "sss",
-            $this->nome,
-            $this->cognome,
-            $this->data_nascita
-        );
-        mysqli_stmt_execute($checkStmt);
-        $checkResult = mysqli_stmt_get_result($checkStmt);
-        $query = "INSERT INTO {$this->table}
-                  (nome, cognome, data_nascita, nazionalità)
-                  VALUES (?, ?, ?, ?)";
+
+        $query .= ")";
 
         $stmt = mysqli_prepare($this->conn, $query);
-        mysqli_stmt_bind_param(
-            $stmt,
-            "ssss",
+
+        $types = "ssss"; // Start with the required fields
+
+        $params = [
             $this->nome,
             $this->cognome,
             $this->data_nascita,
-            $this->nazionalità
-        );
+            $this->nazionalità,
+        ];
+
+        // Add optional parameters and types if they have values
+        if ($this->genere_principale !== null) {
+            $types .= "s";
+            $params= $this->genere_principale;
+        }
+        if ($this->biografia !== null) {
+            $types .= "s";
+            $params= $this->biografia;
+        }
+
+        // Use call_user_func_array to dynamically bind parameters
+        array_unshift($params, $types); // Add type string to the beginning of the $params array
+        array_unshift($params, $stmt);  // Add statement to the beginning of the $params array
+        call_user_func_array('mysqli_stmt_bind_param', $this->refValues($params));
 
         return mysqli_stmt_execute($stmt);
+    }
+
+// Helper function to pass parameters by reference
+    private function refValues(array $arr): array
+    {
+        $refs = NULL;
+        foreach ($arr as $key => $value) {
+            $refs[$key] = &$arr[$key];
+        }
+        return $refs;
     }
 
     /**

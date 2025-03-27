@@ -23,13 +23,13 @@ $request_uri = $_SERVER["REQUEST_URI"];
 
 switch ($request_method) {
     case "GET":
-        if (strpos($request_uri, "/songs") !== false) {
+        if (str_contains($request_uri, "/songs")) {
             if (preg_match("/\/songs\/(\d+)/", $request_uri, $matches)) {
                 echo $songsController->getSongById($matches[1]);
             } else {
                 echo $songsController->getAllSongs();
             }
-        } elseif (strpos($request_uri, "/artists") !== false) {
+        } elseif (str_contains($request_uri, "/artists")) {
             echo $artistsController->getAllArtists();
         }
         // Nuovi endpoint per interpretazioni
@@ -47,12 +47,21 @@ switch ($request_method) {
         break;
 
     case "POST":
-        if (strpos($request_uri, "/songs") !== false) {
+        if (str_contains($request_uri, "/songs")) {
             $data = json_decode(file_get_contents("php://input"), true);
-            echo json_encode($songsController->createSong($data));
+            $songCreated = $songsController->createSong($data);
+            echo json_encode($songCreated);
+
+            if ($songCreated && isset($data["cantanti"]) && is_array($data["cantanti"])) {
+                $song_id = mysqli_insert_id($conn); // Ottieni l'ID della canzone appena creata
+                $interpretiController = new InterpretaController($conn);
+                foreach ($data["cantanti"] as $cantante_id) {
+                    $interpretiController->addInterpretazione($song_id, $cantante_id);
+                }
+            }
         }
         // Nuovo endpoint per interpretazioni
-        elseif (strpos($request_uri, "/interpretazioni") !== false) {
+        elseif (str_contains($request_uri, "/interpretazioni")) {
             $data = json_decode(file_get_contents("php://input"), true);
             $result = $interpretiController->addInterpretazione(
                 $data["id_canzone"],

@@ -23,6 +23,7 @@ class SongsController
     public function __construct($conn)
     {
         $this->conn = $conn;
+        include_once "Canzone.php";
         $this->canzone = new Canzone($conn);
     }
 
@@ -67,7 +68,17 @@ class SongsController
         $this->canzone->genere = $data["genere"];
         $this->canzone->autore = $data["autore"];
 
-        return $this->canzone->create();
+        $songCreated = $this->canzone->create();
+        if ($songCreated && isset($data["cantanti"]) && is_array($data["cantanti"]))
+        {
+            $song_id = mysqli_insert_id($this->conn); // Ottieni l'ID della canzone appena creata
+            $interpretaController = new InterpretaController($this->conn);
+            foreach ($data["cantanti"] as $cantante_id)
+            {
+                $interpretaController->addInterpretazione($song_id, $cantante_id);
+            }
+        }
+        return $songCreated;
     }
 
     /**
