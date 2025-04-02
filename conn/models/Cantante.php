@@ -82,9 +82,7 @@ class Cantante
     {
         $query = "INSERT INTO {$this->table} (nome, cognome, data_nascita, nazionalità";
 
-
         $query .= ") VALUES (?, ?, ?, ?";
-
 
         $query .= ")";
 
@@ -99,28 +97,21 @@ class Cantante
             $this->nazionalità,
         ];
 
-        // Add optional parameters and types if they have values
-        if ($this->genere_principale !== null) {
-            $types .= "s";
-            $params= $this->genere_principale;
-        }
-        if ($this->biografia !== null) {
-            $types .= "s";
-            $params= $this->biografia;
-        }
-
         // Use call_user_func_array to dynamically bind parameters
         array_unshift($params, $types); // Add type string to the beginning of the $params array
-        array_unshift($params, $stmt);  // Add statement to the beginning of the $params array
-        call_user_func_array('mysqli_stmt_bind_param', $this->refValues($params));
+        array_unshift($params, $stmt); // Add statement to the beginning of the $params array
+        call_user_func_array(
+            "mysqli_stmt_bind_param",
+            $this->refValues($params)
+        );
 
         return mysqli_stmt_execute($stmt);
     }
 
-// Helper function to pass parameters by reference
+    // Helper function to pass parameters by reference
     private function refValues(array $arr): array
     {
-        $refs = NULL;
+        $refs = null;
         foreach ($arr as $key => $value) {
             $refs[$key] = &$arr[$key];
         }

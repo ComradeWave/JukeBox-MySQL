@@ -38,12 +38,47 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 // Associa i cantanti alla canzone
                 if (isset($_POST["cantanti"]) && is_array($_POST["cantanti"])) {
                     foreach ($_POST["cantanti"] as $cantanteId) {
-                        $interpretaController->addInterpretazione($songId, $cantanteId);
+                        $interpretaController->addInterpretazione(
+                            $songId,
+                            $cantanteId
+                        );
                     }
                 }
                 $message = "Canzone aggiunta con successo!";
             } else {
                 $message = "Errore nell'aggiunta della canzone.";
+            }
+            break;
+
+        case "update_song":
+            // Get the song ID from the URL
+            $songId = $_GET["id"];
+
+            // Retrieve song data from the form
+            $songData = [
+                "titolo" => $_POST["titolo"],
+                "durata" => $_POST["durata"],
+                "anno" => $_POST["anno"],
+                "genere" => $_POST["genere"],
+            ];
+
+            // Update the song
+            $result = $songsController->updateSong($songId, $songData);
+
+            if ($result) {
+                // Update interpretations
+                $interpretaController->removeInterpretazioniByCanzone($songId); // Remove existing interpretations
+                if (isset($_POST["cantanti"]) && is_array($_POST["cantanti"])) {
+                    foreach ($_POST["cantanti"] as $cantanteId) {
+                        $interpretaController->addInterpretazione(
+                            $songId,
+                            $cantanteId
+                        ); // Add new interpretations
+                    }
+                }
+                $message = "Canzone aggiornata con successo!";
+            } else {
+                $message = "Errore nell'aggiornamento della canzone.";
             }
             break;
 
@@ -61,7 +96,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 : "Errore nell'aggiunta dell'artista.";
             break;
 
-        case "delete":  // Changed action to "delete"
+        case "delete": // Changed action to "delete"
             if ($_POST["delete_type"] === "song") {
                 $songId = $_POST["song_id"];
                 $result = $songsController->deleteSong($songId);
@@ -80,30 +115,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
             }
             break;
-
-        case "add_interpretation":
-            $songId = $_POST["song_id"];
-            $artistId = $_POST["artist_id"];
-            $result = $interpretaController->addInterpretazione($songId, $artistId);
-            if ($result["success"]) {
-                $message = "Interpretazione aggiunta con successo!";
+    }
+} elseif ($_SERVER["REQUEST_METHOD"] == "GET") {
+    if ($action === "edit_song") {
+        $songId = $_GET["id"];
+        $songToEdit = json_decode($songsController->getSongById($songId), true);
+        if ($songToEdit) {
+            // Fetch current artists of the song
+            $songArtists = $interpretaController->getArtistiByCanzoneId(
+                $songId
+            );
+            if (
+                isset($songArtists["artisti"]) &&
+                is_array($songArtists["artisti"])
+            ) {
+                $songArtistsIds = array_column($songArtists["artisti"], "id");
             } else {
-                $message = "Errore nell'aggiunta dell'interpretazione: " .
-                    $result["message"];
+                $songArtistsIds = []; // Ensure it's an empty array if no artists
             }
-            break;
-
-        case "remove_interpretation":
-            $songId = $_POST["song_id"];
-            $artistId = $_POST["artist_id"];
-            $result = $interpretaController->removeInterpretazione($songId, $artistId);
-            if ($result["success"]) {
-                $message = "Interpretazione rimossa con successo!";
-            } else {
-                $message = "Errore nella rimozione dell'interpretazione: " .
-                    $result["message"];
-            }
-            break;
+        } else {
+            $message = "Canzone non trovata.";
+        }
     }
 }
 
@@ -139,44 +171,84 @@ $artists = json_decode($artistsController->getAllArtists(), true);
             <input type="number" name="durata" placeholder="Durata (secondi)" required>
             <input type="number" name="anno" placeholder="Anno" required>
             <input type="text" name="genere" placeholder="Genere" required>
-            <select name="cantanti" multiple required>
-                <?php
-                if ($artists):
-                    foreach ($artists as $artist):
-                        ?>
-                        <option value="<?php echo htmlspecialchars($artist["id"]); ?>">
-                            <?php echo htmlspecialchars($artist["nome"] .
-                                " " .
-                                $artist["cognome"]); ?>
+            <select name="cantanti[]" multiple required>
+                <option value="" disabled selected>Seleziona Artisti</option>
+                <?php if ($artists):
+                    foreach ($artists as $artist): ?>
+                        <option value="<?php echo htmlspecialchars(
+                            $artist["id"]
+                        ); ?>">
+                            <?php echo htmlspecialchars(
+                                $artist["nome"] . " " . $artist["cognome"]
+                            ); ?>
                         </option>
                     <?php endforeach;
-                endif;
-                ?>
+                endif; ?>
             </select>
             <button type="submit">Aggiungi Canzone</button>
         </form>
-        <h3>Canzoni</h3>
+    </div>
+    <div class="section">
+        <h2>Canzoni</h2>
         <table>
             <thead>
             <tr>
                 <th>Titolo</th>
                 <th>Autore</th>
                 <th>Anno</th>
+                <th>Azioni</th>
             </tr>
             </thead>
             <tbody>
-            <?php
-            if ($songs):
+            <?php if ($songs):
                 foreach ($songs as $song):
+
+                    // Fetch artists for each song
+                    $songArtists = json_decode(
+                        $interpretaController->getArtistiByCanzoneId(
+                            $song["id"]
+                        ),
+                        true
+                    );
+                    if (
+                        isset($songArtists["artisti"]) &&
+                        is_array($songArtists["artisti"])
+                    ) {
+                        $artistNames = array_map(function ($artist) {
+                            return htmlspecialchars(
+                                $artist["nome"] . " " . $artist["cognome"]
+                            );
+                        }, $songArtists["artisti"]);
+                        $artistList = implode(", ", $artistNames);
+                    } else {
+                        $artistList = "Nessun Artista";
+                    }
                     ?>
                     <tr>
-                        <td><?php echo htmlspecialchars($song["titolo"]); ?></td>
-                        <td><?php echo htmlspecialchars($song["autore"]); ?></td>
+                        <td><?php echo htmlspecialchars(
+                            $song["titolo"]
+                        ); ?></td>
+                        <td><?php echo htmlspecialchars(
+                            $song["autore"]
+                        ); ?></td>
                         <td><?php echo htmlspecialchars($song["anno"]); ?></td>
+                        <td><?php echo $artistList; ?></td>
+                        <td>
+                            <a href="?action=edit_song&id=<?php echo htmlspecialchars(
+                                $song["id"]
+                            ); ?>">Modifica</a>
+                            <form method='POST' action='?action=delete' style='display:inline;'>
+                                <input type='hidden' name='delete_type' value='song'>
+                                <input type='hidden' name='song_id' value='<?php echo htmlspecialchars(
+                                    $song["id"]
+                                ); ?>'>
+                                <button type='submit' onclick="return confirm('Sei sicuro di voler eliminare questa canzone?')">Elimina</button>
+                            </form>
+                        </td>
                     </tr>
-                <?php endforeach;
-            endif;
-            ?>
+                <?php
+                endforeach;
+            endif; ?>
             </tbody>
         </table>
     </div>
@@ -189,135 +261,118 @@ $artists = json_decode($artistsController->getAllArtists(), true);
             <input type="text" name="nazionalità" placeholder="Nazionalità" required>
             <button type="submit">Aggiungi Artista</button>
         </form>
-        <h3>Artisti</h3>
+    </div>
+    <div class="section">
+        <h2>Artisti</h2>
         <table>
             <thead>
             <tr>
                 <th>Nome</th>
                 <th>Cognome</th>
                 <th>Nazionalità</th>
+                <th>Azioni</th>
             </tr>
             </thead>
             <tbody>
-            <?php
-            if ($artists):
-                foreach ($artists as $artist):
-                    ?>
+            <?php if ($artists):
+                foreach ($artists as $artist): ?>
                     <tr>
-                        <td><?php echo htmlspecialchars($artist["nome"]); ?></td>
-                        <td><?php echo htmlspecialchars($artist["cognome"]); ?></td>
-                        <td><?php echo htmlspecialchars($artist["nazionalità"]); ?></td>
+                        <td><?php echo htmlspecialchars(
+                            $artist["nome"]
+                        ); ?></td>
+                        <td><?php echo htmlspecialchars(
+                            $artist["cognome"]
+                        ); ?></td>
+                        <td><?php echo htmlspecialchars(
+                            $artist["nazionalità"]
+                        ); ?></td>
+                        <td>
+                            <form method='POST' action='?action=delete' style='display:inline;'>
+                                <input type='hidden' name='delete_type' value='artist'>
+                                <input type='hidden' name='artist_id' value='<?php echo htmlspecialchars(
+                                    $artist["id"]
+                                ); ?>'>
+                                <button type='submit' onclick="return confirm('Sei sicuro di voler eliminare questo artista?')">Elimina</button>
+                            </form>
+                        </td>
                     </tr>
                 <?php endforeach;
-            endif;
-            ?>
+            endif; ?>
             </tbody>
         </table>
     </div>
+    <?php if (
+        isset($_GET["action"]) &&
+        $_GET["action"] == "edit_song" &&
+        isset($songToEdit)
+    ): ?>
+        <div class="section">
+            <h2>Modifica Canzone</h2>
+            <form method="POST" action="?action=update_song&id=<?php echo htmlspecialchars(
+                $_GET["id"]
+            ); ?>">
+                <input type="text" name="titolo" value="<?php echo htmlspecialchars(
+                    $songToEdit["titolo"]
+                ); ?>" placeholder="Titolo" required>
+                <input type="number" name="durata" value="<?php echo htmlspecialchars(
+                    $songToEdit["durata"]
+                ); ?>" placeholder="Durata (secondi)" required>
+                <input type="number" name="anno" value="<?php echo htmlspecialchars(
+                    $songToEdit["anno"]
+                ); ?>" placeholder="Anno" required>
+                <input type="text" name="genere" value="<?php echo htmlspecialchars(
+                    $songToEdit["genere"]
+                ); ?>" placeholder="Genere" required>
+                <select name="cantanti[]" multiple required>
+                    <option value="" disabled selected>Seleziona Artisti</option>
+                    <?php if ($artists):
+                        foreach ($artists as $artist):
+                            $selected = in_array($artist["id"], $songArtistsIds)
+                                ? "selected"
+                                : ""; ?>
+                            <option value="<?php echo htmlspecialchars(
+                                $artist["id"]
+                            ); ?>" <?php echo $selected; ?>>
+                                <?php echo htmlspecialchars(
+                                    $artist["nome"] . " " . $artist["cognome"]
+                                ); ?>
+                            </option>
+                        <?php
+                        endforeach;
+                    endif; ?>
+                </select>
+                <button type="submit">Aggiorna Canzone</button>
+            </form>
+        </div>
+    <?php endif; ?>
     <div class="section">
-        <h2>Elimina Canzone/Artista</h2>
-        <form method="POST" action="?action=delete">
-            <select name="delete_type" required>
-                <option value="">Seleziona cosa eliminare</option>
-                <option value="song">Canzone</option>
-                <option value="artist">Artista</option>
-            </select>
-            <select name="song_id" id="song_select">
-                <option value="">Seleziona la canzone</option>
-                <?php
-                if ($songs):
-                    foreach ($songs as $song):
-                        ?>
-                        <option value="<?php echo htmlspecialchars($song["id"]); ?>">
-                            <?php echo htmlspecialchars($song["titolo"]); ?>
-                        </option>
-                    <?php endforeach;
-                endif;
-                ?>
-            </select>
-            <select name="artist_id" id="artist_select">
-                <option value="">Seleziona l'artista</option>
-                <?php
-                if ($artists):
-                    foreach ($artists as $artist):
-                        ?>
-                        <option value="<?php echo htmlspecialchars($artist["id"]); ?>">
-                            <?php echo htmlspecialchars($artist["nome"] .
-                                " " .
-                                $artist["cognome"]); ?>
-                        </option>
-                    <?php endforeach;
-                endif;
-                ?>
-            </select>
-            <button type="submit">Elimina</button>
-        </form>
-    </div>
-    <div class="section">
-        <h2>Gestione Interpretazioni</h2>
+        <h2>Gestisci Interpretazioni</h2>
         <form method="POST" action="?action=add_interpretation">
-            <h3>Aggiungi Interpretazione</h3>
             <select name="song_id" required>
-                <option value="">Seleziona una canzone</option>
-                <?php
-                if ($songs):
-                    foreach ($songs as $song):
-                        ?>
-                        <option value="<?php echo htmlspecialchars($song["id"]); ?>">
-                            <?php echo htmlspecialchars($song["titolo"]); ?>
-                        </option>
-                    <?php endforeach;
-                endif;
-                ?>
+                <option value="" disabled selected>Seleziona Canzone</option>
+                <?php if ($songs): ?>
+                    <?php foreach ($songs as $song): ?>
+                        <option value="<?php echo htmlspecialchars(
+                            $song["id"]
+                        ); ?>"><?php echo htmlspecialchars(
+    $song["titolo"]
+); ?></option>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </select>
-            <select name="artist_id" required>
-                <option value="">Seleziona un artista</option>
-                <?php
-                if ($artists):
-                    foreach ($artists as $artist):
-                        ?>
-                        <option value="<?php echo htmlspecialchars($artist["id"]); ?>">
-                            <?php echo htmlspecialchars($artist["nome"] .
-                                " " .
-                                $artist["cognome"]); ?>
-                        </option>
-                    <?php endforeach;
-                endif;
-                ?>
+            <select name="artist_id[]" multiple required>
+                <option value="" disabled selected>Seleziona Artisti</option>
+                <?php if ($artists): ?>
+                    <?php foreach ($artists as $artist): ?>
+                        <option value="<?php echo htmlspecialchars(
+                            $artist["id"]
+                        ); ?>"><?php echo htmlspecialchars(
+    $artist["nome"] . " " . $artist["cognome"]
+); ?></option>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </select>
-            <button type="submit">Aggiungi Interpretazione</button>
-        </form>
-        <form method="POST" action="?action=remove_interpretation">
-            <h3>Rimuovi Interpretazione</h3>
-            <select name="song_id" required>
-                <option value="">Seleziona una canzone</option>
-                <?php
-                if ($songs):
-                    foreach ($songs as $song):
-                        ?>
-                        <option value="<?php echo htmlspecialchars($song["id"]); ?>">
-                            <?php echo htmlspecialchars($song["titolo"]); ?>
-                        </option>
-                    <?php endforeach;
-                endif;
-                ?>
-            </select>
-            <select name="artist_id" required>
-                <option value="">Seleziona un artista</option>
-                <?php
-                if ($artists):
-                    foreach ($artists as $artist):
-                        ?>
-                        <option value="<?php echo htmlspecialchars($artist["id"]); ?>">
-                            <?php echo htmlspecialchars($artist["nome"] .
-                                " " .
-                                $artist["cognome"]); ?>
-                        </option>
-                    <?php endforeach;
-                endif;
-                ?>
-            </select>
-            <button type="submit">Rimuovi Interpretazione</button>
+            <button type="submit">Aggiungi Interpretazioni</button>
         </form>
     </div>
 </div>

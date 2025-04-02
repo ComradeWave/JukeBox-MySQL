@@ -1,6 +1,6 @@
 <?php
 // JukeBox PHPMySQL/conn/models/Canzone.php
-if (!class_exists('Canzone')) {
+if (!class_exists("Canzone")) {
     class Canzone
     {
         private $conn;
@@ -89,6 +89,11 @@ if (!class_exists('Canzone')) {
 
         public function delete(): bool
         {
+            $query = "DELETE FROM Interpreta WHERE id_canzone = ?";
+            $stmt = mysqli_prepare($this->conn, $query);
+            mysqli_stmt_bind_param($stmt, "i", $this->id);
+            mysqli_stmt_execute($stmt);
+
             $query = "DELETE FROM {$this->table} WHERE id=?";
             $stmt = mysqli_prepare($this->conn, $query);
             mysqli_stmt_bind_param($stmt, "i", $this->id);

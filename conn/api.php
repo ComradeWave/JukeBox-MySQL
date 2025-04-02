@@ -47,17 +47,18 @@ switch ($request_method) {
         break;
 
     case "POST":
-        if (str_contains($request_uri, "/songs")) {
+        if (strpos($request_uri, "/songs") !== false) {
             $data = json_decode(file_get_contents("php://input"), true);
-            $songCreated = $songsController->createSong($data);
-            echo json_encode($songCreated);
-
-            if ($songCreated && isset($data["cantanti"]) && is_array($data["cantanti"])) {
-                $song_id = mysqli_insert_id($conn); // Ottieni l'ID della canzone appena creata
-                $interpretiController = new InterpretaController($conn);
-                foreach ($data["cantanti"] as $cantante_id) {
-                    $interpretiController->addInterpretazione($song_id, $cantante_id);
-                }
+            $songId = $songsController->createSong($data);
+            if ($songId) {
+                http_response_code(201); // Created
+                echo json_encode(["success" => true, "id" => $songId]);
+            } else {
+                http_response_code(500); // Internal Server Error
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Errore nella creazione della canzone",
+                ]);
             }
         }
         // Nuovo endpoint per interpretazioni

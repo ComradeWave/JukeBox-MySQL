@@ -60,7 +60,7 @@ class SongsController
      * @param array $data Song details
      * @return bool True on successful creation
      */
-    public function createSong($data): bool
+    public function createSong($data): int
     {
         $this->canzone->titolo = $data["titolo"];
         $this->canzone->durata = $data["durata"];
@@ -68,17 +68,23 @@ class SongsController
         $this->canzone->genere = $data["genere"];
         $this->canzone->autore = $data["autore"];
 
-        $songCreated = $this->canzone->create();
-        if ($songCreated && isset($data["cantanti"]) && is_array($data["cantanti"]))
-        {
-            $song_id = mysqli_insert_id($this->conn); // Ottieni l'ID della canzone appena creata
-            $interpretaController = new InterpretaController($this->conn);
-            foreach ($data["cantanti"] as $cantante_id)
-            {
-                $interpretaController->addInterpretazione($song_id, $cantante_id);
+        if ($this->canzone->create()) {
+            $songId = mysqli_insert_id($this->conn);
+
+            if (isset($data["artisti"]) && is_array($data["artisti"])) {
+                $interpretaController = new InterpretaController($this->conn);
+                foreach ($data["artisti"] as $artistId) {
+                    $interpretaController->addInterpretazione(
+                        $songId,
+                        $artistId
+                    );
+                }
             }
+
+            return $songId;
         }
-        return $songCreated;
+
+        return 0; // Or handle the failure appropriately
     }
 
     /**
@@ -88,7 +94,7 @@ class SongsController
      * @param array $data Updated song details
      * @return bool True on successful update
      */
-    public function updateSong($id, $data): bool
+    public function updateSong(int $id, array $data): bool
     {
         $this->canzone->id = $id;
         $this->canzone->titolo = $data["titolo"];
@@ -97,7 +103,37 @@ class SongsController
         $this->canzone->genere = $data["genere"];
         $this->canzone->autore = $data["autore"];
 
-        return $this->canzone->update();
+        $songUpdated = $this->canzone->update();
+
+        if (
+            $songUpdated &&
+            isset($data["artisti"]) &&
+            is_array($data["artisti"])
+        ) {
+            $interpretaController = new InterpretaController($this->conn);
+
+            // Ottieni gli artisti correnti della canzone
+            $currentArtists = $interpretaController->getArtistiByCanzoneId($id)[
+                "artisti"
+            ];
+            $currentArtistIds = array_column($currentArtists, "id");
+
+            $newArtistIds = $data["artisti"];
+
+            // Artisti da aggiungere
+            $artistsToAdd = array_diff($newArtistIds, $currentArtistIds);
+            foreach ($artistsToAdd as $artistId) {
+                $interpretaController->addInterpretazione($id, $artistId);
+            }
+
+            // Artisti da rimuovere
+            $artistsToRemove = array_diff($currentArtistIds, $newArtistIds);
+            foreach ($artistsToRemove as $artistId) {
+                $interpretaController->removeInterpretazione($id, $artistId);
+            }
+        }
+
+        return $songUpdated;
     }
 
     /**
