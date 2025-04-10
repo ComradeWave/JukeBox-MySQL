@@ -25,6 +25,74 @@ body {
     width: 100%;
 }
 
+/* Basic Styles for Collapsible Sections */
+.collapsible-section > h2 {
+    cursor: pointer;
+    border-bottom: 1px solid #00ff00;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+    position: relative;
+}
+.collapsible-section > h2::after {
+    content: " [-]"; /* Indicator for expanded */
+    position: absolute;
+    right: 10px;
+}
+.collapsible-section.collapsed > h2::after {
+    content: " [+]"; /* Indicator for collapsed */
+}
+.collapsible-section.collapsed .collapsible-content {
+    /* display: none; */ /* Can cause layout jumps */
+    max-height: 0;
+    overflow: hidden;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    opacity: 0;
+    transition: all 0.3s ease-out;
+}
+.collapsible-content {
+    /* transition for smooth opening */
+    max-height: 2000px; /* Adjust max-height if tables are very large */
+    overflow: hidden;
+    opacity: 1;
+    transition: all 0.5s ease-in-out;
+}
+
+/* Style for search input */
+#search-input {
+    /* Changed from #search-box to match input ID */
+    padding: 10px;
+    margin: 15px auto;
+    width: 90%;
+    max-width: 600px;
+    display: block;
+    background-color: #111; /* Darker background for search */
+    color: #00ff00; /* Ensure text color is visible */
+    border: 1px solid #00ff00; /* Add border */
+    font-family: "Courier New", monospace; /* Match other inputs */
+}
+/* Simple suggestion styling */
+#delete-artist-suggestions {
+    border: 1px solid #00ff00;
+    background-color: rgba(0, 0, 0, 0.9);
+    margin-top: -1px; /* Connect visually to input */
+    max-height: 150px;
+    overflow-y: auto;
+}
+.suggestion-item {
+    cursor: pointer;
+    padding: 5px 10px;
+    border-bottom: 1px dotted rgba(0, 255, 0, 0.3);
+}
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+.suggestion-item:hover {
+    background-color: #003300;
+}
+
 canvas {
     position: fixed;
     z-index: -1;
@@ -165,7 +233,7 @@ canvas {
 }
 
 .section {
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.3);
     border: 2px solid #00ff00;
     padding: 20px;
     width: 100%; /* Changed width to 100% */
@@ -264,7 +332,7 @@ button:hover {
 }
 
 val {
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.3);
     border: 2px solid #00ff00;
     padding: 20px;
     margin-top: 20px;
