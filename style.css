@@ -73,14 +73,21 @@ body {
     border: 1px solid #00ff00; /* Add border */
     font-family: "Courier New", monospace; /* Match other inputs */
 }
-/* Simple suggestion styling */
-#delete-artist-suggestions {
+/* Apply common styles to both artist and song suggestion boxes */
+#delete-artist-suggestions,
+#delete-song-suggestions { /* <--- Added #delete-song-suggestions here */
     border: 1px solid #00ff00;
     background-color: rgba(0, 0, 0, 0.9);
     margin-top: -1px; /* Connect visually to input */
     max-height: 150px;
     overflow-y: auto;
+    position: absolute; /* Added for better positioning control */
+    z-index: 10; /* Ensure it appears above other elements */
+    width: calc(100% - 2px); /* Match input width (adjust if needed) */
+    box-sizing: border-box; /* Include padding/border in width */
 }
+
+/* Styles for individual items remain the same, applied via .suggestion-item class */
 .suggestion-item {
     cursor: pointer;
     padding: 5px 10px;
@@ -91,6 +98,55 @@ body {
 }
 .suggestion-item:hover {
     background-color: #003300;
+}
+/* Styling for the interpreters list within the table cell */
+.interpreti-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.interpreti-list li {
+    margin-bottom: 5px; /* Spacing between interpreters */
+    display: flex;      /* Use flexbox to align name and button */
+    align-items: center; /* Vertically center items */
+    justify-content: space-between; /* Push name and button apart */
+}
+
+/* Styling for the small inline form used for deleting interpretations */
+.delete-interpretation-form {
+    display: inline; /* Keep it inline with the name */
+    margin-left: 10px; /* Space between name and button */
+}
+
+/* Styling for the small '×' button */
+.button-delete-interpretation {
+    display: inline-block;
+    padding: 1px 5px; /* Smaller padding */
+    margin: 0;
+    background-color: #330000; /* Dark red background */
+    color: #ff6666;         /* Light red text/symbol */
+    border: 1px solid #ff0000; /* Red border */
+    text-decoration: none;
+    font-family: "Courier New", monospace;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1em;     /* Adjust size as needed */
+    line-height: 1;     /* Ensure tight line height */
+    font-weight: bold;
+    border-radius: 3px; /* Slightly rounded corners */
+}
+
+.button-delete-interpretation:hover {
+    background-color: #ff0000; /* Bright red on hover */
+    color: black;
+}
+/* Optional: Ensure the parent form/div allows for absolute positioning */
+/* Add this if the suggestion box appears in the wrong place */
+/* You might need to adjust the specific selector */
+#delete-artist-form,
+#delete-song-form {
+    position: relative; /* Containing block for absolute positioning */
 }
 
 canvas {

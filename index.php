@@ -21,6 +21,8 @@ $message = "";
 $songToEdit = null;
 $songArtistsIds = [];
 
+
+
 // --- POST Request Handling ---
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $action = $_POST["action"] ?? $action;
@@ -201,6 +203,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $message = "Errore: Tipo di eliminazione non specificato.";
             }
             break;
+
+        case "delete_interpretation": // <-- Add this new case
+            if (!empty($_POST["song_id"]) && !empty($_POST["artist_id"])) {
+                $songId = (int) $_POST["song_id"];
+                $artistId = (int) $_POST["artist_id"];
+
+                // Use the existing controller method
+                $result = $interpretaController->removeInterpretazione(
+                    $songId,
+                    $artistId
+                );
+
+                if ($result["success"]) {
+                    $message = "Interpretazione rimossa con successo!";
+                } else {
+                    $message =
+                        "Errore nella rimozione dell'interpretazione: " .
+                        ($result["message"] ?? "Dettagli non disponibili.");
+                }
+            } else {
+                $message =
+                    "Errore: ID canzone o artista mancante per rimuovere l'interpretazione.";
+            }
+            break; // <-- Important: Add break
     }
 }
 // --- GET Request Handling ---
@@ -305,101 +331,6 @@ $songsJson = json_encode($songs);
     <meta charset="UTF-8">
     <title>🎵 JukeBox Management</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* Basic Styles for Collapsible Sections */
-        .collapsible-section > h2 {
-            cursor: pointer;
-            border-bottom: 1px solid #00ff00;
-            padding-bottom: 5px;
-            margin-bottom: 10px;
-            position: relative;
-        }
-        .collapsible-section > h2::after {
-            content: ' [-]'; /* Indicator for expanded */
-            position: absolute;
-            right: 10px;
-        }
-        .collapsible-section.collapsed > h2::after {
-            content: ' [+]'; /* Indicator for collapsed */
-        }
-        .collapsible-section.collapsed .collapsible-content {
-            /* display: none; */ /* Can cause layout jumps */
-            max-height: 0;
-            overflow: hidden;
-            padding-top: 0;
-            padding-bottom: 0;
-            margin-top: 0;
-            margin-bottom: 0;
-            opacity: 0;
-            transition: all 0.3s ease-out;
-        }
-         .collapsible-content {
-            /* transition for smooth opening */
-            max-height: 2000px; /* Adjust max-height if tables are very large */
-            overflow: hidden;
-            opacity: 1;
-             transition: all 0.5s ease-in-out;
-        }
-         /* Style for search input */
-        #search-input { /* Changed from #search-box to match input ID */
-            padding: 10px;
-            margin: 15px auto;
-            width: 90%;
-            max-width: 600px;
-            display: block;
-            background-color: #111; /* Darker background for search */
-            color: #00ff00; /* Ensure text color is visible */
-            border: 1px solid #00ff00; /* Add border */
-            font-family: "Courier New", monospace; /* Match other inputs */
-        }
-        /* Simple suggestion styling */
-        #delete-artist-suggestions {
-            border: 1px solid #00ff00;
-            background-color: rgba(0,0,0,0.9);
-            margin-top: -1px; /* Connect visually to input */
-            max-height: 150px;
-            overflow-y: auto;
-        }
-        .suggestion-item {
-             cursor: pointer;
-             padding: 5px 10px;
-             border-bottom: 1px dotted rgba(0, 255, 0, 0.3);
-         }
-         .suggestion-item:last-child {
-             border-bottom: none;
-         }
-         .suggestion-item:hover {
-             background-color: #003300;
-         }
-         /* Simple button styling */
-         .button-link, .button-link-inline, .button-delete {
-            display: inline-block;
-            padding: 8px 12px;
-            margin: 5px 5px 5px 0;
-            background-color: black;
-            color: #00ff00;
-            border: 1px solid #00ff00;
-            text-decoration: none;
-            font-family: "Courier New", monospace;
-            cursor: pointer;
-            transition: all 0.3s ease;
-         }
-         .button-link:hover, .button-link-inline:hover, button:hover, .button-delete:hover {
-            background-color: #00ff00;
-            color: black;
-         }
-         .button-delete {
-             /* Optional: slightly different style for delete */
-             border-color: #ff0000;
-             color: #ff0000;
-         }
-          .button-delete:hover {
-             background-color: #ff0000;
-             color: black;
-             border-color: #ff0000;
-         }
-
-    </style>
     </head>
 
 <body>
@@ -494,7 +425,7 @@ $songsJson = json_encode($songs);
                  <label for="add-genere">Genere:</label>
                  <input id="add-genere" type="text" name="genere" placeholder="Genere" required>
                  <label for="add-cantanti">Artisti (Interpreti):</label>
-                 <select id="add-cantanti" name="cantanti[]" multiple required size="5">
+                 <select id="add-cantanti" name="cantanti[]" multiple size="5">
                      <option value="" disabled selected>Seleziona Artisti</option>
                      <?php if ($artists):
                          foreach ($artists as $artist): ?>
@@ -513,67 +444,110 @@ $songsJson = json_encode($songs);
         </div>
         <?php endif; ?>
 
-        <div class="section collapsible-section" id="songs-section">
+        <div class="section collapsible-section collapsed" id="songs-section">
             <h2 title="Clicca per espandere/collassare">Canzoni</h2>
             <div class="collapsible-content">
-                 <table id="songs-table">
-                     <thead><tr><th>Titolo</th><th>Autore</th><th>Anno</th><th>Interpreti</th><th>Azioni</th></tr></thead>
-                     <tbody>
-                         <?php if (!empty($songs)):
-                             foreach ($songs as $song):
-
-                                 $interpretiResult = $interpretaController->getArtistiByCanzoneId(
-                                     $song["id"]
-                                 );
-                                 $artistList = "N/D";
-                                 if (
-                                     $interpretiResult["success"] &&
-                                     !empty($interpretiResult["artisti"])
-                                 ) {
-                                     $artistNames = array_map(
-                                         fn($a) => htmlspecialchars(
-                                             $a["nome"] . " " . $a["cognome"]
-                                         ),
-                                         $interpretiResult["artisti"]
-                                     );
-                                     $artistList = implode(", ", $artistNames);
-                                 } elseif (!$interpretiResult["success"]) {
-                                     $artistList = "Errore";
-                                 } else {
-                                     $artistList = "Nessuno";
-                                 }
-                                 ?>
-                         <tr>
-                             <td><?php echo htmlspecialchars(
-                                 $song["titolo"]
-                             ); ?></td>
-                             <td><?php echo htmlspecialchars(
-                                 $song["autore"]
-                             ); ?></td>
-                             <td><?php echo htmlspecialchars(
-                                 $song["anno"]
-                             ); ?></td>
-                             <td><?php echo $artistList; ?></td>
-                             <td>
-                                 <a href="?action=edit_song&id=<?php echo htmlspecialchars(
-                                     $song["id"]
-                                 ); ?>" class="button-link-inline">Modifica</a>
-                                 <form method='POST' action='index.php' style='display:inline;'>
-                                     <input type='hidden' name='action' value='delete'><input type='hidden' name='delete_type' value='song'>
-                                     <input type='hidden' name='song_id' value='<?php echo htmlspecialchars(
-                                         $song["id"]
-                                     ); ?>'>
-                                     <button type='submit' class="button-delete" onclick="return confirm('Eliminare la canzone? Verranno rimosse anche le interpretazioni.')">Elimina</button>
-                                 </form>
-                             </td>
-                         </tr>
-                         <?php
-                             endforeach;
-                         else:
-                              ?><tr><td colspan="5">Nessuna canzone trovata.</td></tr><?php
-                         endif; ?>
-                     </tbody>
-                 </table>
+                <table id="songs-table">
+                    <thead>
+                    <tr>
+                        <th>Titolo</th>
+                        <th>Anno</th>
+                        <th>Interpreti</th>
+                        <th>Azioni</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php if (!empty($songs)):
+                        foreach ($songs as $song):
+                            ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars(
+                                        $song["titolo"]
+                                    ); ?></td>
+                                <td><?php echo htmlspecialchars(
+                                        $song["anno"]
+                                    ); ?></td>
+                                <td>
+                                    <?php
+                                    // --- Fetch Interpreters for THIS song ---
+                                    $interpretiResult = $interpretaController->getArtistiByCanzoneId(
+                                        $song["id"]
+                                    );
+                                    if (
+                                        $interpretiResult["success"] &&
+                                        !empty($interpretiResult["artisti"])
+                                    ) {
+                                        echo "<ul class='interpreti-list'>"; // Use a list for better structure
+                                        foreach (
+                                            $interpretiResult["artisti"]
+                                            as $artista
+                                        ) {
+                                            echo "<li>";
+                                            echo htmlspecialchars(
+                                                $artista["nome"] .
+                                                " " .
+                                                $artista["cognome"]
+                                            );
+                                            // --- Add small delete form for this interpretation ---
+                                            echo "<form method='POST' action='index.php' class='delete-interpretation-form'>";
+                                            echo "<input type='hidden' name='action' value='delete_interpretation'>";
+                                            echo "<input type='hidden' name='song_id' value='" .
+                                                htmlspecialchars($song["id"]) .
+                                                "'>";
+                                            echo "<input type='hidden' name='artist_id' value='" .
+                                                htmlspecialchars($artista["id"]) .
+                                                "'>";
+                                            echo "<button type='submit' class='button-delete-interpretation' title='Rimuovi questa interpretazione' onclick=\"return confirm('Rimuovere l\'interpretazione di " .
+                                                htmlspecialchars(
+                                                    addslashes(
+                                                        $artista["nome"] .
+                                                        " " .
+                                                        $artista["cognome"]
+                                                    )
+                                                ) .
+                                                " per la canzone " .
+                                                htmlspecialchars(
+                                                    addslashes($song["titolo"])
+                                                ) .
+                                                "?')\">×</button>"; // Use '×' symbol
+                                            echo "</form>";
+                                            // --- End delete form ---
+                                            echo "</li>";
+                                        }
+                                        echo "</ul>";
+                                    } elseif (!$interpretiResult["success"]) {
+                                        echo "Errore DB";
+                                    } else {
+                                        echo "Nessuno";
+                                    }
+                                    ?>
+                                </td>
+                                <td>
+                                    <a href="?action=edit_song&id=<?php echo htmlspecialchars(
+                                        $song["id"]
+                                    ); ?>" class="button-link-inline">Modifica</a>
+                                    <form method='POST' action='index.php' style='display:inline;'>
+                                        <input type='hidden' name='action' value='delete'><input type='hidden' name='delete_type' value='song'>
+                                        <input type='hidden' name='song_id' value='<?php echo htmlspecialchars(
+                                            $song["id"]
+                                        ); ?>'>
+                                        <button type='submit' class="button-delete" onclick="return confirm('Eliminare la canzone <?php echo htmlspecialchars(
+                                            addslashes($song["titolo"])
+                                        ); ?>? Verranno rimosse anche TUTTE le interpretazioni.')">Elimina Canzone</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php
+                        endforeach;
+                    else:
+                        ?>
+                        <tr>
+                            <td colspan="4">Nessuna canzone trovata.</td>
+                        </tr>
+                    <?php
+                    endif; ?>
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -589,7 +563,7 @@ $songsJson = json_encode($songs);
              </form>
         </div>
 
-        <div class="section collapsible-section" id="artists-section">
+        <div class="section collapsible-section collapsed" id="artists-section">
              <h2 title="Clicca per espandere/collassare">Artisti</h2>
              <div class="collapsible-content">
                  <table id="artists-table">
@@ -634,15 +608,44 @@ $songsJson = json_encode($songs);
                 <select id="interp-song-select" name="song_id" required>
                     <option value="" disabled selected>-- Seleziona una Canzone --</option>
                     <?php if (!empty($songs)):
-                        foreach ($songs as $song): ?>
-                         <option value="<?php echo htmlspecialchars(
-                             $song["id"]
-                         ); ?>"><?php echo htmlspecialchars(
-    $song["titolo"] . " (" . $song["autore"] . ", " . $song["anno"] . ")"
-); ?></option>
-                    <?php endforeach;
+                        foreach ($songs as $song):
+                            // --- Fetch Interpreters for THIS specific song ---
+                            $interpretiDropdownResult = $interpretaController->getArtistiByCanzoneId($song["id"]);
+                            $interpretiListText = "Nessuno"; // Default text if no interpreters
+
+                            if ($interpretiDropdownResult["success"] && !empty($interpretiDropdownResult["artisti"])) {
+                                // Map artist names (first name + last name)
+                                $interpretiNames = array_map(
+                                    fn($a) => trim(htmlspecialchars($a["nome"] . " " . $a["cognome"])),
+                                    $interpretiDropdownResult["artisti"]
+                                );
+                                // Join names with a comma
+                                $interpretiListText = implode(", ", $interpretiNames);
+
+                                // Optional: Truncate if the list is very long for the dropdown display
+                                $maxLength = 50; // Adjust max characters as needed
+                                if (mb_strlen($interpretiListText) > $maxLength) {
+                                    $interpretiListText = mb_substr($interpretiListText, 0, $maxLength - 3) . "...";
+                                }
+
+                            } elseif (!$interpretiDropdownResult["success"]) {
+                                $interpretiListText = "Errore DB"; // Indicate if fetching failed
+                            }
+
+                            // --- Construct the option text ---
+                            $optionDisplayText = sprintf(
+                                "%s (%s, %s)",
+                                htmlspecialchars($song["titolo"]),
+                                $interpretiListText, // Use the fetched and formatted interpreters list
+                                htmlspecialchars($song["anno"])
+                            );
+                            ?>
+                            <option value="<?php echo htmlspecialchars($song["id"]); ?>">
+                                <?php echo $optionDisplayText; // Display the new format ?>
+                            </option>
+                        <?php endforeach;
                     else:
-                         ?><option value="" disabled>Nessuna canzone</option><?php
+                        ?><option value="" disabled>Nessuna canzone</option><?php
                     endif; ?>
                 </select>
                 <label for="interp-artist-select">Seleziona Artisti da Associare:</label>
@@ -650,14 +653,12 @@ $songsJson = json_encode($songs);
                     <option value="" disabled>-- Seleziona uno o più Artisti --</option>
                     <?php if (!empty($artists)):
                         foreach ($artists as $artist): ?>
-                         <option value="<?php echo htmlspecialchars(
-                             $artist["id"]
-                         ); ?>"><?php echo htmlspecialchars(
-    $artist["nome"] . " " . $artist["cognome"]
-); ?></option>
-                    <?php endforeach;
+                            <option value="<?php echo htmlspecialchars($artist["id"]); ?>">
+                                <?php echo htmlspecialchars($artist["nome"] . " " . $artist["cognome"]); ?>
+                            </option>
+                        <?php endforeach;
                     else:
-                         ?><option value="" disabled>Nessun artista</option><?php
+                        ?><option value="" disabled>Nessun artista</option><?php
                     endif; ?>
                 </select>
                 <button type="submit">Aggiungi/Associa Interpretazioni</button>
@@ -682,9 +683,11 @@ $songsJson = json_encode($songs);
             <form method="POST" action="index.php" id="delete-song-form">
                 <input type='hidden' name='action' value='delete'>
                 <input type='hidden' name='delete_type' value='song'>
-                <input type='hidden' name='song_id' id="delete-song-id" value=''> <label for="delete-song-search">Cerca e seleziona Canzone da Eliminare:</label>
+                <input type='hidden' name='song_id' id="delete-song-id" value=''>
+                <label for="delete-song-search">Cerca e seleziona Canzone da Eliminare:</label>
                 <input type="text" id="delete-song-search" placeholder="Inizia a scrivere titolo, genere o anno..." autocomplete="off">
-                <div id="delete-song-suggestions"></div> <button type="submit" class="button-delete" id="delete-song-submit-button" disabled>
+                <div id="delete-song-suggestions"></div>
+                <button type="submit" class="button-delete" id="delete-song-submit-button" disabled>
                     Elimina Canzone Selezionata
                 </button>
             </form>
@@ -694,6 +697,7 @@ $songsJson = json_encode($songs);
     </div> <script>
         // Make artist data available to JS
         const allArtists = <?php echo $artistsJson; ?>;
+        const allSongs = <?php echo $songsJson; ?>;
 
         // --- Debounce function ---
         function debounce(func, wait) { /* ... debounce code ... */
@@ -736,29 +740,97 @@ $songsJson = json_encode($songs);
                 // header.parentElement.classList.add('collapsed');
             });
 
-            // --- General Search Filter Logic ---
-            const searchInput = document.getElementById('search-input');
-            const songsTableBody = document.querySelector('#songs-table tbody');
-            const artistsTableBody = document.querySelector('#artists-table tbody');
+            // --- Song Delete Suggestion Logic ---
+            const songSearchInput = document.getElementById('delete-song-search');
+            const songSuggestionsDiv = document.getElementById('delete-song-suggestions');
+            const hiddenSongIdInput = document.getElementById('delete-song-id');
+            const deleteSongButton = document.getElementById('delete-song-submit-button');
+            // Ensure allSongs is defined and is an array passed correctly from PHP
+            // const allSongs = <?php echo $songsJson; ?>; // This should be defined earlier in the script block
 
-            if (searchInput && songsTableBody && artistsTableBody) {
-                searchInput.addEventListener('input', debounce(function() {
-                    const searchTerm = searchInput.value.toLowerCase().trim();
+            // Check if all necessary elements and the allSongs data exist and are valid
+            if (songSearchInput && songSuggestionsDiv && hiddenSongIdInput && deleteSongButton && typeof allSongs !== 'undefined' && Array.isArray(allSongs)) {
 
-                    // Filter songs table
-                    Array.from(songsTableBody.rows).forEach(row => {
-                        const rowText = row.textContent.toLowerCase();
-                        row.style.display = rowText.includes(searchTerm) ? '' : 'none';
+                songSearchInput.addEventListener('input', debounce(function() {
+                    const query = songSearchInput.value.toLowerCase().trim();
+                    songSuggestionsDiv.innerHTML = ''; // Clear previous suggestions
+                    hiddenSongIdInput.value = ''; // Clear hidden ID value
+                    deleteSongButton.disabled = true; // Disable button until a selection is made
+
+                    if (query.length < 2) { // Minimum characters to start searching
+                        return;
+                    }
+
+                    // Filter the songs based on the query (checking title, genre, year)
+                    const filteredSongs = allSongs.filter(song => {
+                        // Ensure properties exist before accessing them
+                        const title = song.titolo ? song.titolo.toLowerCase() : '';
+                        const genre = song.genere ? song.genere.toLowerCase() : '';
+                        const year = song.anno ? String(song.anno) : ''; // Convert year to string for searching
+                        const searchText = `${title} ${genre} ${year}`;
+                        return searchText.includes(query);
                     });
 
-                    // Filter artists table
-                    Array.from(artistsTableBody.rows).forEach(row => {
-                        const rowText = row.textContent.toLowerCase();
-                        row.style.display = rowText.includes(searchTerm) ? '' : 'none';
+                    // Limit the number of suggestions displayed
+                    const suggestionsToShow = filteredSongs.slice(0, 10);
+
+                    // Create and append suggestion items
+                    suggestionsToShow.forEach(song => {
+                        const item = document.createElement('div');
+                        item.textContent = `${song.titolo} (${song.anno}) - ${song.genere}`; // Text to display
+                        item.classList.add('suggestion-item'); // Apply CSS class
+                        item.dataset.id = song.id; // Store the song ID in a data attribute
+                        item.style.cursor = 'pointer'; // Make it look clickable
+
+                        // Add click event listener to each suggestion item
+                        item.addEventListener('click', function() {
+                            songSearchInput.value = this.textContent; // Fill the input field with the selected text
+                            hiddenSongIdInput.value = this.dataset.id; // Set the hidden input's value to the song ID
+                            songSuggestionsDiv.innerHTML = ''; // Clear the suggestions list
+                            deleteSongButton.disabled = false; // Enable the delete button
+                        });
+                        songSuggestionsDiv.appendChild(item);
                     });
-                }, 300)); // Debounce search input
+
+                }, 300)); // Debounce time in milliseconds
+
+                // Optional: Clear suggestions if the user clicks outside the search area
+                document.addEventListener('click', function(event) {
+                    if (!songSearchInput.contains(event.target) && !songSuggestionsDiv.contains(event.target)) {
+                        songSuggestionsDiv.innerHTML = '';
+                    }
+                });
+
+                // Add confirmation dialog on form submission
+                const deleteSongForm = document.getElementById('delete-song-form');
+                if (deleteSongForm) {
+                    deleteSongForm.addEventListener('submit', function(event) {
+                        // Double-check if an ID has been selected before submitting
+                        if (!hiddenSongIdInput.value) {
+                            alert('Per favore, seleziona una canzone dalla lista prima di eliminare.');
+                            event.preventDefault(); // Stop submission
+                            return;
+                        }
+                        // Confirm deletion with the user
+                        if (!confirm('ATTENZIONE! Sei sicuro di voler eliminare la canzone selezionata? Tutte le sue interpretazioni verranno perse.')) {
+                            event.preventDefault(); // Stop submission if user cancels
+                        }
+                        // If confirmed, the form submits normally
+                    });
+                }
+
+            } else {
+                // Log an error if setup fails (useful for debugging)
+                console.error("Errore: Impossibile inizializzare l'autocomplete per la cancellazione delle canzoni.");
+                if (!songSearchInput) console.error("Elemento non trovato: #delete-song-search");
+                if (!songSuggestionsDiv) console.error("Elemento non trovato: #delete-song-suggestions");
+                if (!hiddenSongIdInput) console.error("Elemento non trovato: #delete-song-id");
+                if (!deleteSongButton) console.error("Elemento non trovato: #delete-song-submit-button");
+                if (typeof allSongs === 'undefined' || !Array.isArray(allSongs)) {
+                    console.error("Variabile 'allSongs' non definita o non è un array:", allSongs);
+                }
             }
-
+            // --- End of Song Delete Suggestion Logic ---
              // --- Artist Delete Suggestion Logic ---
             const artistSearchInput = document.getElementById('delete-artist-search');
             const artistSuggestionsDiv = document.getElementById('delete-artist-suggestions');

@@ -61,6 +61,7 @@ erDiagram
     }
     Canzone ||--o{ Interpreta : "è interpretata da"
     Cantante ||--o{ Interpreta : interpreta
+}```
 
 Web Interface (index.php) Features
 
