@@ -1,4 +1,12 @@
 <?php
+session_start();
+
+// Check if user is logged in, if not,  then redirect to login page
+if(!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true){
+    header("location: login.php");
+    exit;
+}
+
 error_reporting(E_ALL);
 ini_set("display_errors", 1);
 
@@ -354,6 +362,10 @@ $songsJson = json_encode($songs);
                     <a href="index.php" class="button-link-inline" style="margin-left: 10px;">Mostra Tutto</a>
                 <?php endif; ?>
              </form>
+        </div>
+        <div style="text-align: right; margin-bottom: 10px;">
+            Benvenuto, <b><?php echo htmlspecialchars($_SESSION["username"]); ?></b>!
+            <a href="logout.php" class="button-link-inline" style="margin-left: 15px;">Logout</a>
         </div>
 
         <?php
