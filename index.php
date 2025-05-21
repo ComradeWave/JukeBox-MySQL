@@ -276,18 +276,30 @@ if (!empty($searchTerm)) {
     // --- Perform Search ---
     $likeTerm = "%{$searchTerm}%";
 
-    // Search Songs (adjust fields as needed)
-    $sqlSongs =
-        "SELECT * FROM Canzone WHERE titolo LIKE ? OR autore LIKE ? OR genere LIKE ? OR anno LIKE ?";
+    // Search Songs (including by interpreter name)
+    $sqlSongs = "
+        SELECT DISTINCT Canzone.*
+        FROM Canzone
+        LEFT JOIN Interpreta ON Canzone.id = Interpreta.id_canzone
+        LEFT JOIN Cantante ON Interpreta.id_cantante = Cantante.id
+        WHERE Canzone.titolo LIKE ?
+           OR Canzone.autore LIKE ?
+           OR Canzone.genere LIKE ?
+           OR Canzone.anno LIKE ?
+           OR Cantante.nome LIKE ?
+           OR Cantante.cognome LIKE ?
+    ";
     $stmtSongs = mysqli_prepare($conn, $sqlSongs);
     if ($stmtSongs) {
         mysqli_stmt_bind_param(
             $stmtSongs,
-            "ssss",
-            $likeTerm,
-            $likeTerm,
-            $likeTerm,
-            $likeTerm
+            "ssssss", // Changed from "ssss" to "ssssss"
+            $likeTerm, // for Canzone.titolo
+            $likeTerm, // for Canzone.autore
+            $likeTerm, // for Canzone.genere
+            $likeTerm, // for Canzone.anno
+            $likeTerm, // for Cantante.nome
+            $likeTerm  // for Cantante.cognome
         );
         mysqli_stmt_execute($stmtSongs);
         $resultSongs = mysqli_stmt_get_result($stmtSongs);
