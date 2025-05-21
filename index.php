@@ -268,7 +268,7 @@ elseif ($_SERVER["REQUEST_METHOD"] == "GET") {
 }
 
 // --- Data Fetching for Display (with Search) ---
-$searchTerm = $_GET["search"] ?? "";
+$searchTerm = trim($_GET["search"] ?? "");
 $songs = [];
 $artists = [];
 
